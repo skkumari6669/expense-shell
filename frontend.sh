@@ -26,7 +26,6 @@ CHECK_ROOT(){
     fi
 }
 
-CHECK_ROOT
 
 VALIDATE(){
     if [ $1 -ne 0 ]
@@ -40,26 +39,32 @@ VALIDATE(){
 
 echo -e "$R Script executing started at ...$(date) $N" | tee -a $LOG_FILE
 
+CHECK_ROOT
 
-dnf install mysql-server -y &>>$LOG_FILE
-VALIDATE $? "Installed MYSQL" &>>$LOG_FILE
+dnf install nginx -y &>>$LOG_FILE
+VALIDATE $? "Installing nginx"
 
-systemctl enable mysqld &>>$LOG_FILE
-VALIDATE $? "Enabled MYSQL" &>>$LOG_FILE
+systemctl enable nginx &>>$LOG_FILE
+VALIDATE $? "Enable nginx"
 
-systemctl start mysqld &>>$LOG_FILE
-VALIDATE $? "Started MYSQL server" &>>$LOG_FILE
+systemctl start nginx &>>$LOG_FILE
+VALIDATE $? "Start nginx"
 
-mysql -h mysql.devops81s.online -uroot -pEXPENSEAPP@1 -e 'show databases;' &>>$LOG_FILE 
-# -e means it shows dbs with out enter into the db
-if [ $? -ne 0]
-then
-   echo "MYSQL root password is not set up... please set up" &>>$LOG_FILE
-   mysql_secure_installation --set-root-pass ExpenseApp@1
-   VALIDATE $? "root password setting up" 
-else
-   echo -e "$R MYSQL root password is already set....$Y skipping" | tee -a $LOG_FILE
-fi
+rm -rf /usr/share/nginx/html/*
+VALIDATE $? "Remove the default content in html folder"
+
+curl -o /tmp/frontend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-frontend-v2.zip
+VALIDATE $? "Download the application code"
+
+cd /usr/share/nginx/html
+unzip /tmp/frontend.zip
+VALIDATE $? "Extract the frontend content"
+
+cp /home/ec2-user/expense-shell/expense.conf /etc/nginx/default.d/expense.conf
+VALIDATE $? "Copied expense conf"
+
+systemctl restart nginx
+VALIDATE $? "Restart nginx"
 
 
 
