@@ -26,7 +26,6 @@ CHECK_ROOT(){
     fi
 }
 
-CHECK_ROOT
 
 VALIDATE(){
     if [ $1 -ne 0 ]
@@ -40,6 +39,7 @@ VALIDATE(){
 
 echo -e "$R Script executing started at ...$(date) $N" | tee -a $LOG_FILE
 
+CHECK_ROOT
 
 dnf install mysql-server -y &>>$LOG_FILE
 VALIDATE $? "Installed MYSQL" &>>$LOG_FILE
